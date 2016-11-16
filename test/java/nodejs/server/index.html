@@ -1,0 +1,12 @@
+
+
+<script src="node_modules/engine.io/lib/engine.io.js"></script>
+<script>
+  // eio = Socket
+  var socket = eio('ws://localhost:3000');
+  socket.on('open', function(){
+	alert('Opening')
+    socket.on('message', function(data){});
+    socket.on('close', function(){});
+  });
+</script>
