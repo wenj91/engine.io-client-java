@@ -1,10 +1,10 @@
 package com.github.wenj91.engine.io;
 
-import com.github.wenj91.engine.io.enums.EngineIOEnum;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.github.wenj91.engine.io.encoding.Packet;
+import com.github.wenj91.engine.io.enums.PacketType;
+import okhttp3.*;
 import okhttp3.ws.WebSocket;
 import okhttp3.ws.WebSocketCall;
 import okhttp3.ws.WebSocketListener;
@@ -12,6 +12,8 @@ import okio.Buffer;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by wenj91 on 2016-11-16.
@@ -20,6 +22,8 @@ public class EngineIOClient implements WebSocketListener{
 
     private String url;
     private WebSocket webSocket;
+
+    private Map<String, Object> query = new HashMap<>();
 
     public EngineIOClient(String url){
         this.url = url;
@@ -49,9 +53,19 @@ public class EngineIOClient implements WebSocketListener{
         //在此监听服务端返回消息
         //消息分发
         if(responseBody.contentType() == WebSocket.TEXT){
-            char type = responseBody.string().charAt(0);
+            String res = responseBody.string();
+            char type = res.charAt(0);
             switch (type){
                 case '0':
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            System.out.println("Get The Open Message, Client Ping Interval!");
+                            JSONObject jo = JSON.parseObject(res.substring(1));
+                            Packet packet = new Packet(PacketType.PING, "ping");
+
+                        }
+                    }).start();
                     break;
                 case '1':
                     break;
@@ -60,6 +74,10 @@ public class EngineIOClient implements WebSocketListener{
                 case '3':
                     break;
                 case '4':
+                    break;
+                case '5':
+                    break;
+                case '6':
                     break;
                 default:
                     break;
@@ -82,10 +100,16 @@ public class EngineIOClient implements WebSocketListener{
     }
 
     public String uri(){
+        Map<String, Object> query = this.query;
         StringBuffer sb = new StringBuffer(url);
         sb.append("/engine.io/?transport=websocket")
                 .append("&t=").append(new Date().getTime());
 
         return sb.toString();
+    }
+
+    public static void main(String...args){
+        EngineIOClient client = new EngineIOClient("ws://127.0.0.1:3000");
+        client.build();
     }
 }
