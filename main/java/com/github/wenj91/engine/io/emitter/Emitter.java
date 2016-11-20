@@ -51,11 +51,7 @@ public class Emitter {
     }
 
     public Emitter off(String event){
-        ConcurrentLinkedQueue<Listener> listeners = this.callbacks.get(event);
-        if(listeners != null){
-            listeners.clear();
-        }
-
+        this.callbacks.remove(event);
         return this;
     }
 

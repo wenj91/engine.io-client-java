@@ -1,5 +1,6 @@
 package com.github.wenj91.engine.io.transports.transport;
 
+import com.github.wenj91.engine.io.encoding.Packet;
 import com.github.wenj91.engine.io.transports.Transport;
 import com.github.wenj91.engine.io.transports.base.Option;
 import com.github.wenj91.engine.io.util.QueryUtil;
@@ -28,6 +29,21 @@ public class WebSocket extends Transport{
         }
 
         return sb.toString();
+    }
+
+    @Override
+    public void sendPacket(Packet... packets) {
+
+    }
+
+    @Override
+    public void doOpen() {
+        onOpen();
+    }
+
+    @Override
+    public void doClose() {
+
     }
 
     public static void main(String...args){

@@ -5,6 +5,8 @@ import com.github.wenj91.engine.io.encoding.Packet;
 import com.github.wenj91.engine.io.parser.Parser;
 import com.github.wenj91.engine.io.transports.base.Option;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -21,6 +23,14 @@ public abstract class Transport extends Emitter{
         this.option = option;
     }
 
+    public Transport onError(String msg, String desc){
+        Map<String, Object> error = new HashMap<>();
+        error.put("type", "TransportError");
+        error.put("desc", desc);
+        emit("onError", error);
+        return this;
+    }
+
     public Transport open(){
         if(executor == null){
             executor = Executors.newSingleThreadExecutor();
@@ -28,8 +38,8 @@ public abstract class Transport extends Emitter{
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                //open
-                //send ping interval
+                //do sth
+                doOpen();
             }
         });
         return this;
@@ -44,16 +54,25 @@ public abstract class Transport extends Emitter{
             public void run() {
                 //send
                 //send the packet
+                sendPacket(packets);
             }
         });
     }
 
-    public void onData(String data){
+    protected void onMessage(String data){
         this.onPacket(Parser.encode2Packet(data));
     }
 
-    void onPacket(Packet packet){
+    protected void onOpen(){
+        this.emit("open");
+    }
+
+    protected void onPacket(Packet packet){
         this.emit("packet", packet);
+    }
+
+    protected void onClose(){
+        this.emit("close");
     }
 
     public Transport close(){
@@ -64,6 +83,9 @@ public abstract class Transport extends Emitter{
             @Override
             public void run() {
                 //close
+                //do sth
+                doClose();
+                onClose();
             }
         });
 
@@ -71,6 +93,12 @@ public abstract class Transport extends Emitter{
     }
 
     public abstract String uri();
+
+    public abstract void sendPacket(Packet...packets);
+
+    public abstract void doOpen();
+
+    public abstract void doClose();
 
     public Option getOption() {
         return option;

@@ -12,13 +12,14 @@ public class QueryUtil {
     public static String map2Query(Map<String, Object> queryMap){
         StringBuffer sb = new StringBuffer();
 
-        Set<String> keySet = queryMap.keySet();
-
-        for(String key : keySet){
-            if(sb.length()>0){
-                sb.append("&");
+        if(!queryMap.isEmpty()){
+            Set<String> keySet = queryMap.keySet();
+            for(String key : keySet){
+                if(sb.length()>0){
+                    sb.append("&");
+                }
+                sb.append(key).append("=").append(queryMap.get(key));
             }
-            sb.append(key).append("=").append(queryMap.get(key));
         }
 
         return sb.toString();
@@ -26,8 +27,8 @@ public class QueryUtil {
 
     public static void main(String...args){
         Map<String, Object> query = new HashMap();
-        query.put("key1", "keyss");
-        query.put("key2", "test");
+        query.put("key1", "value1");
+        query.put("key2", "value2");
 
         System.out.println(map2Query(query));
     }
