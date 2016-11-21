@@ -10,4 +10,9 @@ public class Parser {
 
         return null;
     }
+
+    public static String decode2String(Packet packet){
+
+        return null;
+    }
 }

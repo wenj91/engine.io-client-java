@@ -1,6 +1,6 @@
 package com.github.wenj91.engine.io.emitter;
 
-import com.github.wenj91.engine.io.emitter.Listener.Listener;
+import com.github.wenj91.engine.io.emitter.listener.Listener;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -18,12 +18,19 @@ public class Emitter {
     public ConcurrentMap<String, ConcurrentLinkedQueue<Listener>>
             callbacks = new ConcurrentHashMap<>();
 
-    //Emitter#on(event, fn)
+    /**
+     * Emitter#on(event, fn)
+     * @param event
+     * @param listener
+     * @return
+     */
     public Emitter on(String event, Listener listener){
-        ConcurrentLinkedQueue<Listener> listeners = this.callbacks.get(event);
+        ConcurrentLinkedQueue<Listener> listeners
+                = this.callbacks.get(event);
         if(listeners == null){
             listeners = new ConcurrentLinkedQueue<>();
-            ConcurrentLinkedQueue<Listener> temp = this.callbacks.putIfAbsent(event, listeners);
+            ConcurrentLinkedQueue<Listener> temp
+                    = this.callbacks.putIfAbsent(event, listeners);
             if(temp!=null){
                 listeners = temp;
             }
@@ -33,7 +40,12 @@ public class Emitter {
         return this;
     }
 
-    //Emitter#off(event, fn)
+    /**
+     * Emitter#off(event, fn)
+     * @param event
+     * @param listener
+     * @return
+     */
     public Emitter off(String event, Listener listener){
         ConcurrentLinkedQueue<Listener> listeners
                 = this.callbacks.get(event);
@@ -55,20 +67,33 @@ public class Emitter {
         return this;
     }
 
-    //off
+    /**
+     * off
+     * @return
+     */
     public Emitter off(){
         callbacks.clear();
         return this;
     }
 
-    //Emitter#once(event, fn)
+    /**
+     * Emitter#once(event, fn)
+     * @param event
+     * @param listener
+     * @return
+     */
     public Emitter once(String event, Listener listener){
         this.off(event, listener);
         this.on(event, listener);
         return this;
     }
 
-    //Emitter#emit(event, ...)
+    /**
+     * Emitter#emit(event, ...)
+     * @param event
+     * @param args
+     * @return
+     */
     public Emitter emit(String event, Object...args){
         List<Listener> listeners = this.listeners(event);
         if(listeners!=null){
@@ -80,61 +105,27 @@ public class Emitter {
         return this;
     }
 
-    //Emitter#listeners(event)
+    /**
+     * Emitter#listeners(event)
+     * @param event
+     * @return
+     */
     public List<Listener> listeners(String event){
         return this.callbacks.get(event)==null?
                 null:new ArrayList<>(this.callbacks.get(event));
     }
 
-    //Emitter#hasListeners(event)
+    /**
+     * Emitter#hasListeners(event)
+     * @param event
+     * @return
+     */
     public boolean hasListeners(String event){
         if(this.callbacks.get(event)!=null &&
                 !this.callbacks.get(event).isEmpty()){
             return true;
         }
         return false;
-    }
-
-    public static void main(String...args){
-        Emitter emitter = new Emitter();
-        emitter.on("event", new Listener() {
-            @Override
-            public void call(Object... args) {
-                System.out.println("event");
-            }
-        });
-        emitter.on("key", new Listener() {
-            @Override
-            public void call(Object... args) {
-                System.out.println("key1");
-            }
-        });
-
-        emitter.on("key", new Listener() {
-            @Override
-            public void call(Object... args) {
-
-            }
-        });
-
-        Listener listener = new Listener() {
-            @Override
-            public void call(Object... args) {
-                System.out.println("key11");
-            }
-        };
-
-        emitter.on("key", listener);
-
-        emitter.off("key", listener);
-
-        emitter.off();
-
-        emitter.once("once", listener);
-
-        emitter.once("once", listener);
-
-        System.out.println();
     }
 
 }

@@ -1,5 +1,6 @@
 package com.github.wenj91.engine.io.transports.transport;
 
+import com.github.wenj91.engine.io.encoding.Packet;
 import com.github.wenj91.engine.io.transports.Transport;
 import com.github.wenj91.engine.io.transports.base.Option;
 
@@ -14,5 +15,20 @@ public class Flashsocket extends Transport{
     @Override
     public String uri() {
         return null;
+    }
+
+    @Override
+    public void sendPacket(Packet... packets) {
+
+    }
+
+    @Override
+    public void doOpen() {
+
+    }
+
+    @Override
+    public void doClose() {
+
     }
 }
