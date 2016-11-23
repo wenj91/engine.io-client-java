@@ -7,8 +7,8 @@ import com.github.wenj91.engine.io.transports.base.Option;
 /**
  * Created by wenj91 on 16-11-19.
  */
-public class Flashsocket extends Transport{
-    public Flashsocket(Option option) {
+public class FlashSocket extends Transport{
+    public FlashSocket(Option option) {
         super(option);
     }
 
