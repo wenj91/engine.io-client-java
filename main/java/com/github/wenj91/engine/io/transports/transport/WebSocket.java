@@ -1,7 +1,5 @@
 package com.github.wenj91.engine.io.transports.transport;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.github.wenj91.engine.io.encoding.Packet;
 import com.github.wenj91.engine.io.parser.Parser;
 import com.github.wenj91.engine.io.transports.Transport;
@@ -15,7 +13,9 @@ import okio.Buffer;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static okhttp3.ws.WebSocket.TEXT;
 
@@ -107,42 +107,16 @@ public class WebSocket extends Transport implements WebSocketListener{
 
     @Override
     public void onFailure(IOException e, Response response) {
-        onError("", "webSocket connect failure!");
+        onError("1000", "webSocket connect failure!");
     }
 
     @Override
     public void onMessage(ResponseBody message) throws IOException {
-        String res = message.string();
 
-        /**********TEST CODE START************/
-        if(res.charAt(0) =='0') {
-
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    while (true) {
-                        try {
-                            webSocket.sendMessage(RequestBody.create(TEXT, "2ping"));
-                            System.out.println("Ping Server!!!");
-//                                System.out.println("Send The Ping Data Success!");
-                            JSONObject jo = JSON.parseObject(res.substring(res.indexOf("{")));
-                            Thread.sleep(jo.getInteger("pingInterval")-1000);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }).start();
-        }else if(res.charAt(0)=='3'){
-
-        }else{
-            System.out.println("MESSAGE: " + res.substring(1));
-            onMsg(res);
+        if(message.contentType() == TEXT){
+            onMsg(message.string());
         }
-
-        /**********TEST CODE END************/
+        message.close();//@see https://github.com/square/okhttp/issues/2303
     }
 
     @Override
