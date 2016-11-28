@@ -16,7 +16,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by wenj91 on 2016-11-16.
@@ -61,21 +62,22 @@ public class EngineIO extends Emitter{
 
         if(PacketType.OPEN.getValue().equals(packet.getTypeId())) {
 
-            emit("OnOpen", packet);
+            emit(EmitterEventType.onOpen.getEvent(), packet);
 
             HandshakeData handshakeData = Parser.encode2HandshakeData(packet.getData());
 
             ScheduledThreadPoolExecutor schedule = new ScheduledThreadPoolExecutor(1);
-            schedule.	scheduleAtFixedRate(new Runnable() {
+            schedule.scheduleAtFixedRate(new Runnable() {
                 @Override
                 public void run() {
                     ping();
                 }
             }, 0, handshakeData.getPingInterval(), TimeUnit.MILLISECONDS);
         }else if(PacketType.MESSAGE.getValue().equals(packet.getTypeId())){
-
+            emit(EmitterEventType.onPacket.getEvent(), packet);
         }else if(PacketType.CLOSE.getValue().equals(packet.getTypeId())){
-
+            emit(EmitterEventType.onClose.getEvent(), packet);
+            close();
         }
 
         return this;
@@ -103,7 +105,7 @@ public class EngineIO extends Emitter{
     public static void main(String...args) throws URISyntaxException {
         EngineIO client = new EngineIO("ws://127.0.0.1:3000");
         client.open();
-        client.on("OnOpen", new Listener() {
+        client.on(EmitterEventType.onOpen.getEvent(), new Listener() {
             @Override
             public void call(Object... args) {
                 System.out.println(JSON.toJSONString(args));
