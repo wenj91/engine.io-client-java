@@ -5,28 +5,24 @@ import com.github.wenj91.engine.io.parser.Parser;
 import com.github.wenj91.engine.io.transports.Transport;
 import com.github.wenj91.engine.io.transports.base.Option;
 import com.github.wenj91.engine.io.util.QueryUtil;
-import okhttp3.*;
-import okhttp3.ws.WebSocketCall;
-import okhttp3.ws.WebSocketListener;
-import okio.Buffer;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.WebSocketListener;
+import okio.ByteString;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import static okhttp3.ws.WebSocket.TEXT;
 
 /**
  * Created by wenj91 on 16-11-19.
- * practice: copy from https://github.com/socketio/engine.io-client-java
  */
-public class WebSocket extends Transport implements WebSocketListener{
+public class WebSocket extends Transport{
 
-    private okhttp3.ws.WebSocket webSocket;
-    WebSocketCall call;
+    private okhttp3.WebSocket webSocket;
 
     Executor executor;
 
@@ -36,98 +32,86 @@ public class WebSocket extends Transport implements WebSocketListener{
 
     @Override
     protected void sendPacket(Packet...packets) {
-        try {
-            for(Packet packet : packets){
-                webSocket.sendMessage(RequestBody.create(TEXT,
-                        Parser.decode2String(packet)));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        for(Packet packet : packets){
+            webSocket.send(Parser.decode2String(packet));
         }
     }
 
     @Override
     protected void doOpen() {
+        System.out.println("Do Open!!!");
 
-        OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder()
-                .connectTimeout(0, TimeUnit.MILLISECONDS)
-                .readTimeout(0, TimeUnit.MILLISECONDS)
-                .writeTimeout(0, TimeUnit.MILLISECONDS);//see  https://github.com/socketio/engine.io-client-java/issues/32
+        OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
 
         String url = this.uri();
         Request request = new Request.Builder()
                 .url(this.uri())
                 .build();
 
-        OkHttpClient client = clientBuilder.build();
+        WebSocket self = this;
 
-        call = WebSocketCall.create(client, request);
-        call.enqueue(this);
-        System.out.println("Do Open!!!");
+        OkHttpClient client = clientBuilder.build();
+        client.newWebSocket(request, new WebSocketListener() {
+            @Override
+            public void onOpen(okhttp3.WebSocket webSocket, Response response) {
+                self.webSocket = webSocket;
+
+                System.out.println("On Open!!!");
+
+                try {
+                    System.out.println(response.body()==null?
+                            "NULL":response.body().string());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                Map<String, List<String>> headers = response.headers().toMultimap();
+                if(executor==null){
+                    executor = Executors.newSingleThreadExecutor();
+                }
+
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        self.onOpen();
+                    }
+                });
+            }
+
+            @Override
+            public void onMessage(okhttp3.WebSocket webSocket, String text) {
+                onMsg(text);
+            }
+
+            @Override
+            public void onMessage(okhttp3.WebSocket webSocket, ByteString bytes) {
+                super.onMessage(webSocket, bytes);
+            }
+
+            @Override
+            public void onClosing(okhttp3.WebSocket webSocket, int code, String reason) {
+                super.onClosing(webSocket, code, reason);
+            }
+
+            @Override
+            public void onClosed(okhttp3.WebSocket webSocket, int code, String reason) {
+                self.close();
+            }
+
+            @Override
+            public void onFailure(okhttp3.WebSocket webSocket, Throwable t, Response response) {
+                self.onError("1000", "webSocket connect failure!");
+            }
+        });
     }
 
     @Override
     protected void doClose() {
-        try {
-            webSocket.close(1000, "");
-        } catch (IOException e) {
-            e.printStackTrace();
+        webSocket.close(1000, "");
+
+        if(webSocket!=null){
+            webSocket.cancel();
         }
-        if(call!=null){
-            call.cancel();
-        }
-    }
-
-    @Override
-    public void onOpen(okhttp3.ws.WebSocket webSocket, Response response) {
-        this.webSocket = webSocket;
-
-        System.out.println("On Open!!!");
-
-        try {
-            System.out.println(response.body()==null?
-                    "NULL":response.body().string());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        Map<String, List<String>> headers = response.headers().toMultimap();
-        if(executor==null){
-            executor = Executors.newSingleThreadExecutor();
-        }
-
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                onOpen();
-            }
-        });
-
-    }
-
-    @Override
-    public void onFailure(IOException e, Response response) {
-        onError("1000", "webSocket connect failure!");
-    }
-
-    @Override
-    public void onMessage(ResponseBody message) throws IOException {
-
-        if(message.contentType() == TEXT){
-            onMsg(message.string());
-        }
-        message.close();//@see https://github.com/square/okhttp/issues/2303
-    }
-
-    @Override
-    public void onPong(Buffer payload) {
-
-    }
-
-    @Override
-    public void onClose(int code, String reason) {
-        System.out.println("On Close!!!");
-        close();
     }
 
     @Override

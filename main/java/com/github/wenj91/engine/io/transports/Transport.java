@@ -28,7 +28,7 @@ public abstract class Transport extends Emitter{
         Map<String, Object> error = new HashMap<>();
         error.put("type", "TransportError");
         error.put("desc", desc);
-        emit(EmitterEventType.onError.getEvent(), error);
+        emit(EmitterEventType.onError.getEvent(), msg, error);
         return this;
     }
 
