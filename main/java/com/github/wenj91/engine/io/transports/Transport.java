@@ -4,6 +4,7 @@ import com.github.wenj91.engine.io.emitter.Emitter;
 import com.github.wenj91.engine.io.encoding.Packet;
 import com.github.wenj91.engine.io.enums.EmitterEventType;
 import com.github.wenj91.engine.io.parser.Parser;
+import com.github.wenj91.engine.io.thread.EventThread;
 import com.github.wenj91.engine.io.transports.base.Option;
 
 import java.util.HashMap;
@@ -18,7 +19,6 @@ public abstract class Transport extends Emitter{
 
     private Option option;
 
-    Executor executor;
 
     public Transport(Option option){
         this.option = option;
@@ -33,10 +33,7 @@ public abstract class Transport extends Emitter{
     }
 
     public Transport open(){
-        if(executor == null){
-            executor = Executors.newSingleThreadExecutor();
-        }
-        executor.execute(new Runnable() {
+        EventThread.execTask(new Runnable() {
             @Override
             public void run() {
                 doOpen();
@@ -46,10 +43,7 @@ public abstract class Transport extends Emitter{
     }
 
     public void send(Packet...packets){
-        if(executor == null){
-            executor = Executors.newSingleThreadExecutor();
-        }
-        executor.execute(new Runnable() {
+        EventThread.execTask(new Runnable() {
             @Override
             public void run() {
                 sendPacket(packets);
@@ -74,10 +68,7 @@ public abstract class Transport extends Emitter{
     }
 
     public Transport close(){
-        if(executor == null){
-            executor = Executors.newSingleThreadExecutor();
-        }
-        executor.execute(new Runnable() {
+        EventThread.execTask(new Runnable() {
             @Override
             public void run() {
                 doClose();

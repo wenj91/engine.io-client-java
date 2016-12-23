@@ -2,6 +2,7 @@ package com.github.wenj91.engine.io.transports.transport;
 
 import com.github.wenj91.engine.io.encoding.Packet;
 import com.github.wenj91.engine.io.parser.Parser;
+import com.github.wenj91.engine.io.thread.EventThread;
 import com.github.wenj91.engine.io.transports.Transport;
 import com.github.wenj91.engine.io.transports.base.Option;
 import com.github.wenj91.engine.io.util.QueryUtil;
@@ -23,8 +24,6 @@ import java.util.concurrent.Executors;
 public class WebSocket extends Transport{
 
     private okhttp3.WebSocket webSocket;
-
-    Executor executor;
 
     public WebSocket(Option option) {
         super(option);
@@ -66,11 +65,7 @@ public class WebSocket extends Transport{
                 }
 
                 Map<String, List<String>> headers = response.headers().toMultimap();
-                if(executor==null){
-                    executor = Executors.newSingleThreadExecutor();
-                }
-
-                executor.execute(new Runnable() {
+                EventThread.execTask(new Runnable() {
                     @Override
                     public void run() {
                         self.onOpen();
